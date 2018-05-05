@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -39,6 +40,12 @@ public class MainWindowController implements CellChangedListener{
 	@FXML 
 	Label lbGen;
 	
+	@FXML 
+	Label lbSpeed;
+	
+	@FXML
+	Slider slSpeed;
+	
 	Model m;
 	
 	Button buttons[][];
@@ -55,9 +62,13 @@ public class MainWindowController implements CellChangedListener{
 				new KeyFrame(Duration.millis(0), ae -> {
 					m.setNextGeneration();
 				}),
-				new KeyFrame(new Duration(500))
+				new KeyFrame(new Duration(1000))
 				);
 		ticker.setCycleCount(Timeline.INDEFINITE);
+        ticker.rateProperty()
+        .bind(slSpeed.valueProperty().divide(100./19).add(1));
+		
+        
     	btPlay.setOnMouseClicked((me) -> {
     		if(ticker.getStatus() == Status.STOPPED) {
     			ticker.play();
@@ -75,12 +86,14 @@ public class MainWindowController implements CellChangedListener{
     	btClear.setOnMouseClicked((me) -> {
     		m.clearGrid();
     	});
+    
     	
-    	
-//    	btClear.disabledProperty().bind(
-//    			Bindings.when(m.generationProperty().isEqualTo(0))
-//    			.then(true)
-//    			.otherwise(false));
+    	btReset.disableProperty().bind(
+    			Bindings.when(
+	    			m.generationProperty().isEqualTo(0))
+	    			.then(true)
+	    			.otherwise(false)
+    			);
     	
     	btReset.setOnMouseClicked((me) -> {
     		m.loadGeneration0();
@@ -93,8 +106,19 @@ public class MainWindowController implements CellChangedListener{
 			}
 		};
 		
+		NumberStringConverter converterRound = new NumberStringConverter() {
+			@Override
+			public String toString(Number value) {
+				return String.format("%.2f",value);
+			}
+		};
+		
 		lbGen.textProperty().bindBidirectional(m.generationProperty(), converter);
-    	
+		lbSpeed.textProperty().bindBidirectional(ticker.rateProperty(), converterRound);
+        
+
+
+		
     }
 
     public void generateGrid(int xSize, int ySize) {

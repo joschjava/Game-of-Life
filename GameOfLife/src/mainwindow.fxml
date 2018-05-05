@@ -25,6 +25,8 @@
             <Button fx:id="btStep" mnemonicParsing="false" text="Step" />
              <Button fx:id="btClear" mnemonicParsing="false" text="Clear" />
               <Button fx:id="btReset" mnemonicParsing="false" text="Reset" />
+            <Slider fx:id="slSpeed" />
+               <Label fx:id="lbSpeed" mnemonicParsing="false" text="0" />
          </children>
          <VBox.margin>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
