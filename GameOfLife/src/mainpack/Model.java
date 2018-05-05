@@ -1,15 +1,25 @@
+package mainpack;
 
+import java.util.ArrayList;
+
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 
 public class Model {
 
-	boolean curGen[][];
-	boolean nextGen[][];
+	private boolean curGen[][];
+	private boolean nextGen[][];
+	private boolean genZero[][];
 	
-	int numNeighbours[][];
-	int xSize = -1;
-	int ySize = -1;
+	private int numNeighbours[][];
+	private int xSize = -1;
+	private int ySize = -1;
 	
-	Model (int xSize, int ySize){
+	private IntegerProperty generation = new SimpleIntegerProperty(0);
+	
+	private ArrayList<CellChangedListener> listeners = new ArrayList<CellChangedListener>();
+	
+	public Model (int xSize, int ySize){
 		this.xSize = xSize;
 		this.ySize = ySize;
 		curGen = new boolean[ySize][xSize];
@@ -23,13 +33,42 @@ public class Model {
 		}
 	}
 	
+	public IntegerProperty generationProperty() {
+		return generation;
+	}
+	
+	private void saveGeneration0() {
+		genZero = curGen.clone();
+	}
+	
+	public void loadGeneration0() {
+		curGen = genZero.clone();
+		resetGenCount();
+		notifyBoardChange();
+	}
+	
+	public void resetGenCount() {
+		generation.set(0);
+	}
+	
+	public void addListener(CellChangedListener listener) {
+		listeners.add(listener);
+		notifyBoardChange();
+	}
+	
+	public void notifyListener(int x, int y, boolean alive) {
+		for(CellChangedListener l: listeners) {
+			l.cellChanged(x, y, alive);
+		}
+	}
+	
 	public void setNextGeneration() {
+		if(generation.get() == 0) {
+			saveGeneration0();
+		}
 		nextGen = new boolean[ySize][xSize];
 		resetNeighbours();
 		calcNumNeighbours();
-		System.out.println("Neighbours:");
-		printNeighbours();
-		System.out.println();
 		for(int y = 0;y<ySize; y++) {
 			for(int x = 0;x<xSize; x++) {
 				int num = numNeighbours[y][x];
@@ -46,8 +85,9 @@ public class Model {
 				}
 			}
 		}
-		
+		generation.set(generation.get()+1); 
 		curGen = nextGen;
+		notifyBoardChange();
 	}
 
 	private void calcNumNeighbours() {
@@ -72,7 +112,7 @@ public class Model {
 	}
 	
 	public void toggleLivingCell(int x, int y) {
-		curGen[y][x] = !curGen[y][x];
+		setCell(x,y,!curGen[y][x]);
 	}
 	
 	public void createLivingCell(int x, int y) {
@@ -83,31 +123,18 @@ public class Model {
 		setCell(x,y,false);
 	}
 	
-	private void setCell(int x, int y, boolean alive) {
-		curGen[y][x] = alive;
-	}
-	
-	/**
-	 * Returns the points surrounding particular point
-	 * @param x
-	 * @param y
-	 * @return
-	 * @deprecated
-	 */
-	public Point[] getSurroundingPoints(int x, int y){
-		Point[] surPoints =  new Point[8];
-		int counter = 0;
-		for(int xIt = -1; xIt <= 1; xIt++) {
-			for(int yIt = -1; yIt <= 1; yIt++) {
-				if(!(xIt == 0 && yIt ==0)) {
-					int xCur = correctCoord(x+xIt, xSize);
-					int yCur = correctCoord(y+yIt, ySize);
-					surPoints[counter++] = new Point(xCur,yCur);
-				}
+	public void clearGrid() {
+		for(int y = 0;y<ySize; y++) {
+			for(int x = 0;x<xSize; x++) {
+				setCell(x,y,false);
 			}
 		}
-		
-		return surPoints;
+		resetGenCount();
+	}
+	
+	private void setCell(int x, int y, boolean alive) {
+		curGen[y][x] = alive;
+		notifyListener(x, y, alive);
 	}
 	
 	/**
@@ -160,6 +187,14 @@ public class Model {
 				System.out.print(out + " ");
 			}
 			System.out.println();
+		}
+	}
+	
+	public void notifyBoardChange() {
+		for(int y = 0;y<ySize; y++) {
+			for(int x = 0;x<xSize; x++) {
+				notifyListener(x, y, curGen[y][x]);
+			}
 		}
 	}
 	
