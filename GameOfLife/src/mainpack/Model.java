@@ -1,6 +1,7 @@
 package mainpack;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -8,7 +9,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class Model {
 
 	private boolean curGen[][];
-	private boolean nextGen[][];
+//	private boolean nextGen[][];
 	private boolean genZero[][];
 	
 	private int numNeighbours[][];
@@ -28,7 +29,6 @@ public class Model {
 		for(int y = 0;y<ySize; y++) {
 			for(int x = 0;x<xSize; x++) {
 				curGen[y][x] = false;
-				numNeighbours[y][x] = 0;
 			}
 		}
 	}
@@ -38,11 +38,25 @@ public class Model {
 	}
 	
 	private void saveGeneration0() {
-		genZero = curGen.clone();
+		genZero = new boolean[curGen.length][];
+		for(int i = 0; i < curGen.length; i++)
+		{
+		  boolean[] aMatrix = curGen[i];
+		  int   aLength = aMatrix.length;
+		  genZero[i] = new boolean[aLength];
+		  System.arraycopy(aMatrix, 0, genZero[i], 0, aLength);
+		}
 	}
 	
-	public void loadGeneration0() {
-		curGen = genZero.clone();
+	public void loadGeneration0() {		
+		curGen = new boolean[genZero.length][];
+		for(int i = 0; i < genZero.length; i++)
+		{
+		  boolean[] aMatrix = genZero[i];
+		  int   aLength = aMatrix.length;
+		  curGen[i] = new boolean[aLength];
+		  System.arraycopy(aMatrix, 0, curGen[i], 0, aLength);
+		}
 		resetGenCount();
 		notifyBoardChange();
 	}
@@ -66,27 +80,27 @@ public class Model {
 		if(generation.get() == 0) {
 			saveGeneration0();
 		}
-		nextGen = new boolean[ySize][xSize];
+//		nextGen = new boolean[ySize][xSize];
 		resetNeighbours();
 		calcNumNeighbours();
 		for(int y = 0;y<ySize; y++) {
 			for(int x = 0;x<xSize; x++) {
 				int num = numNeighbours[y][x];
 				if(num < 2 && curGen[y][x]) {
-					nextGen[y][x] = false;
+					curGen[y][x] = false;
 				} else if((num == 2 || num == 3) && curGen[y][x]) {
-					nextGen[y][x] = true;
+					curGen[y][x] = true;
 				} else if(num > 3 && curGen[y][x]) {
-					nextGen[y][x] = false; 
+					curGen[y][x] = false; 
 				} else if(num == 3 && !curGen[y][x]) {
-					nextGen[y][x] = true;
+					curGen[y][x] = true;
 				} else {
-					nextGen[y][x] = false;
+					curGen[y][x] = false;
 				}
 			}
 		}
 		generation.set(generation.get()+1); 
-		curGen = nextGen;
+//		curGen = nextGen;
 		notifyBoardChange();
 	}
 
@@ -104,11 +118,7 @@ public class Model {
 	 * Sets neighbour array to 0
 	 */
 	private void resetNeighbours() {
-		for(int y = 0;y<ySize; y++) {
-			for(int x = 0;x<xSize; x++) {
-				numNeighbours[y][x] = 0;
-			}
-		}
+		numNeighbours = new int[ySize][xSize];
 	}
 	
 	public void toggleLivingCell(int x, int y) {

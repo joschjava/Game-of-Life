@@ -54,7 +54,7 @@ public class MainWindowController implements CellChangedListener{
 	
     @FXML
     public void initialize() {
-    	generateGrid(20,20);
+    	generateGrid(2,2);
     	btStep.setOnMouseClicked((me) -> {
     		m.setNextGeneration();
     	});
@@ -122,6 +122,7 @@ public class MainWindowController implements CellChangedListener{
     }
 
     public void generateGrid(int xSize, int ySize) {
+    	gameGrid.getChildren().clear();
     	buttons = new Button[xSize][ySize];
     	m = new Model(xSize,ySize);
 
@@ -147,7 +148,6 @@ public class MainWindowController implements CellChangedListener{
         		gameGrid.add(b, x,y);
     		}
 		}
-    	m.createLivingCell(1, 1);
     	m.addListener(this);
     }
     
