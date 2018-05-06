@@ -1,19 +1,24 @@
 package gui;
 
 
+import java.awt.Point;
+import java.util.ArrayList;
+
 import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.Scene;
+import javafx.scene.Cursor;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -23,6 +28,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javafx.util.converter.NumberStringConverter;
 import mainpack.CellChangedListener;
+import mainpack.Const;
 import mainpack.Model;
 
 public class MainWindowController implements CellChangedListener{
@@ -45,6 +51,9 @@ public class MainWindowController implements CellChangedListener{
 	@FXML
 	Button btReset;
 	
+	@FXML
+	Button btPlace;
+	
 	@FXML 
 	Label lbGen;
 	
@@ -63,6 +72,10 @@ public class MainWindowController implements CellChangedListener{
 	 int counter = 0;
 	
 	private Timeline ticker;
+
+	private boolean placeObject[][];
+	private boolean placeActive = false;
+	private ArrayList<Point> highlightedPoints = new ArrayList<Point>();
 	
     @FXML
     public void initialize() {
@@ -79,7 +92,6 @@ public class MainWindowController implements CellChangedListener{
 		ticker.setCycleCount(Timeline.INDEFINITE);
         ticker.rateProperty()
         .bind(slSpeed.valueProperty().divide(100./19).add(1));
-		
         
     	btPlay.setOnMouseClicked((me) -> {
     		if(ticker.getStatus() == Status.STOPPED) {
@@ -113,6 +125,16 @@ public class MainWindowController implements CellChangedListener{
     		resetChart();
     	});
     	
+    	btPlace.setOnMouseClicked((me) -> {
+    		activatePlacingObjects();
+    		btPlace.getScene().addEventHandler(KeyEvent.KEY_PRESSED, (key) -> {
+    		      if(key.getCode()==KeyCode.ESCAPE) {
+    		          deactivatePlacingObjects();
+    		          gameGrid.setCursor(Cursor.DEFAULT);
+    		      }
+    		});
+    	});
+    	
 		NumberStringConverter converter = new NumberStringConverter() {
 			@Override
 			public String toString(Number value) {
@@ -132,13 +154,9 @@ public class MainWindowController implements CellChangedListener{
         
 		createChart();
 		m.addListener(this);
-		
     }
 
 	private void setNextGeneration() {
-//		if(m.getGeneration() == 0) {
-//			series.getData().add(new XYChart.Data(0, m.getLivingCells()));
-//		}
 		int numCells = m.setNextGeneration();
         series.getData().add(new XYChart.Data(m.generationProperty().get(), numCells));
         if(numCells == 0) {
@@ -148,6 +166,20 @@ public class MainWindowController implements CellChangedListener{
 
     public void generateGrid(int xSize, int ySize) {
     	gameGrid.getChildren().clear();
+    	gameGrid.setOnMouseExited((me) ->
+    	{
+    		if(placeActive) {
+    			unhighlightObject();
+    		}
+    		gameGrid.setCursor(Cursor.DEFAULT);
+    	});
+    	gameGrid.setOnMouseEntered((me) ->
+    	{
+    		if(placeActive) {
+    			gameGrid.setCursor(Cursor.NONE);
+    		}
+    	});
+    	
     	buttons = new Button[xSize][ySize];
     	m = new Model(xSize,ySize);
 
@@ -158,19 +190,46 @@ public class MainWindowController implements CellChangedListener{
         		b.getProperties().put("gridY", y);
         		
         		b.setOnMousePressed((me) -> {
-        			m.toggleLivingCell((int)b.getProperties().get("gridX"),
-        					(int)b.getProperties().get("gridY"));
+        			if(placeActive) {
+        		    	for(int yy=0;yy<placeObject.length;yy++) {
+        		        	for(int xx=0;xx<placeObject[0].length;xx++) {
+        		        		int xCur = xx+(int)b.getProperties().get("gridX");
+        		        		int yCur = yy+(int)b.getProperties().get("gridY");
+        		        		int correctedX = Model.correctCoord(xCur, 'x');
+        		        		int correctedY = Model.correctCoord(yCur, 'y');
+        		        		if(placeObject[yy][xx]) {
+        		        			m.createLivingCell(correctedX, correctedY);
+        		        		} else {
+        		        			m.createDeadCell(correctedX, correctedY);
+        		        		}
+        		        	}
+        		    	}
+        			} else {
+	        			m.toggleLivingCell((int)b.getProperties().get("gridX"),
+	        					(int)b.getProperties().get("gridY"));
+        			}
         			m.resetGenCount();
         			resetChart();
         		});
         		b.setOnDragDetected((me) -> {
-        			b.startFullDrag();
+        			if(!placeActive) {
+						b.startFullDrag();
+					}
         		});
         		b.setOnMouseDragEntered((me) -> {
-        				m.createLivingCell((int)b.getProperties().get("gridX"),
+        			if(!placeActive) {
+	        			m.createLivingCell((int)b.getProperties().get("gridX"),
+	        					(int)b.getProperties().get("gridY"));
+	        			m.resetGenCount();
+	        			resetChart();
+        			}
+        		});
+        		
+        		b.setOnMouseEntered((me) -> {
+        			if(placeActive) {
+        				previewObject((int)b.getProperties().get("gridX"),
             					(int)b.getProperties().get("gridY"));
-            			m.resetGenCount();
-            			resetChart();
+        			}
         		});
         		buttons[x][y] = b;
         		gameGrid.add(b, x,y);
@@ -207,25 +266,58 @@ public class MainWindowController implements CellChangedListener{
     	} else {
     		((XYChart.Data) series.getData().get(0)).setYValue(m.getLivingCells());
     	}
-
     }
     
+    public void activatePlacingObjects() {
+    	placeActive = true;
+    	placeObject = new boolean[][] {{false, true, false},
+							    		{false, false, true},
+							    		{true, true, true}};
+    }
+    
+    public void deactivatePlacingObjects() {
+    	placeActive = false;
+    	unhighlightObject();
+    }
+    
+    public void previewObject(int xInit, int yInit) {
+    	unhighlightObject();
+    	for(int y=0;y<placeObject.length;y++) {
+        	for(int x=0;x<placeObject[0].length;x++) {
+        		int xCur = Model.correctCoord(x+xInit, 'x');
+        		int yCur = Model.correctCoord(y+yInit, 'y');
+				highlightPreviewCell(xCur, yCur, placeObject[y][x]);
+				highlightedPoints.add(new Point(xCur, yCur));
+        	}
+    	}
+    }
+
+	private void unhighlightObject() {
+		highlightedPoints.forEach((p) -> {
+    		unhighlightPreviewCell((int)p.getX(), (int)p.getY());
+    	});
+    	highlightedPoints.clear();
+	}
+    
+    public void highlightPreviewCell(int x, int y, boolean alive) {
+		if(alive) {
+			buttons[x][y].setBackground(Const.BG_LIVING_PRE);
+		} else {
+			buttons[x][y].setBackground(Const.BG_DEAD_PRE);
+		}
+    }
+    
+    public void unhighlightPreviewCell(int x, int y) {
+    	boolean alive = m.getCell(x, y);
+    	cellChanged(x,y,alive);
+    }
     
 	@Override
-	public void cellChanged(int x, int y, boolean alive, boolean firstGen) {
+	public void cellChanged(int x, int y, boolean alive) {
 		if(alive) {
-			buttons[x][y].setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
+			buttons[x][y].setBackground(Const.BG_LIVING);
 		} else {
-			buttons[x][y].setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+			buttons[x][y].setBackground(Const.BG_DEAD);
 		}
-//		if(firstGen) {
-//			System.out.println("Firstgen");
-//			int length = series.getData().size();
-//			if(length > 0) {
-//				series.getData().remove(0);
-//				XYChart.Data update = new XYChart.Data(0, m.getLivingCells());
-//				series.getData().add(0, update);
-//			}
-//		}
 	}
 }

@@ -13,14 +13,12 @@ public class Model {
 	private boolean genZero[][];
 	
 	private int numNeighbours[][];
-	private int xSize = -1;
-	private int ySize = -1;
+	private static int xSize = -1;
+	private static int ySize = -1;
 	
 	private IntegerProperty generation = new SimpleIntegerProperty(0);
 	
 	private ArrayList<CellChangedListener> listeners = new ArrayList<CellChangedListener>();
-	
-	private boolean firstGen = true;
 	
 	public Model (int xSize, int ySize){
 		this.xSize = xSize;
@@ -81,7 +79,6 @@ public class Model {
 	
 	public void resetGenCount() {
 		generation.set(0);
-		firstGen = true;
 	}
 	
 	public void addListener(CellChangedListener listener) {
@@ -91,7 +88,7 @@ public class Model {
 	
 	public void notifyListener(int x, int y, boolean alive) {
 		for(CellChangedListener l: listeners) {
-			l.cellChanged(x, y, alive, firstGen);
+			l.cellChanged(x, y, alive);
 		}
 	}
 	
@@ -99,7 +96,6 @@ public class Model {
 		int numCells = 0;
 		if(generation.get() == 0) {
 			saveGeneration0();
-			firstGen = false;
 		}
 //		nextGen = new boolean[ySize][xSize];
 		resetNeighbours();
@@ -171,6 +167,10 @@ public class Model {
 		notifyListener(x, y, alive);
 	}
 	
+	public boolean getCell(int x, int y) {
+		return curGen[y][x];
+	}
+	
 	/**
 	 * Increases the points surrounding particular point
 	 * @param x
@@ -181,8 +181,8 @@ public class Model {
 		for(int xIt = -1; xIt <= 1; xIt++) {
 			for(int yIt = -1; yIt <= 1; yIt++) {
 				if(!(xIt == 0 && yIt ==0)) {
-					int xCur = correctCoord(x+xIt, xSize);
-					int yCur = correctCoord(y+yIt, ySize);
+					int xCur = correctCoord(x+xIt, 'x');
+					int yCur = correctCoord(y+yIt, 'y');
 					try {
 						numNeighbours[yCur][xCur]+=1;
 					} catch (Exception e) {
@@ -200,7 +200,31 @@ public class Model {
 	 * @param maxSize Maximum Size of Coordinate
 	 * @return
 	 */
-	private int correctCoord(int coord, int maxSize) {
+//	public static int correctCoord(int coord, int maxSize) {
+//		if(coord < 0) {
+//			coord = maxSize-1;
+//		} else if(coord >= maxSize) {
+//			coord = 0;
+//		}
+//		return coord;
+//	}
+	
+	/**
+	 * Corrects coordinate if it is outside of grid
+	 * @param coord Coordinate to be tested
+	 * @param direction 'x' or 'y'
+	 * @return
+	 */
+	public static int correctCoord(int coord, char direction) {
+		int maxSize = -1;
+		if(direction == 'x') {
+			maxSize = xSize;
+		} else if(direction == 'y') {
+			maxSize = ySize;
+		} else {
+			System.err.println("Wrong direction: "+direction+", Use 'x' or 'y'");
+		}
+		
 		if(coord < 0) {
 			coord = maxSize-1;
 		} else if(coord >= maxSize) {

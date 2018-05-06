@@ -6,7 +6,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 public class GameOfLife extends Application {
@@ -24,9 +24,9 @@ public class GameOfLife extends Application {
         FXMLLoader loader = new FXMLLoader();
         URL res = GameOfLife.class.getResource("/mainwindow.fxml");
         loader.setLocation(res);
-        VBox rootLayout = null;
+        HBox rootLayout = null;
 		try {
-			rootLayout = (VBox) loader.load();
+			rootLayout = (HBox) loader.load();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
