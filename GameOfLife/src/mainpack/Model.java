@@ -20,6 +20,8 @@ public class Model {
 	
 	private ArrayList<CellChangedListener> listeners = new ArrayList<CellChangedListener>();
 	
+	private boolean firstGen = true;
+	
 	public Model (int xSize, int ySize){
 		this.xSize = xSize;
 		this.ySize = ySize;
@@ -48,6 +50,22 @@ public class Model {
 		}
 	}
 	
+	public int getGeneration() {
+		return generation.get();
+	}
+	
+	public int getLivingCells() {
+		int numLivingCells = 0;
+		for(int y = 0;y<ySize; y++) {
+			for(int x = 0;x<xSize; x++) {
+				if(curGen[y][x]) {
+					numLivingCells++;
+				}
+			}
+		}
+		return numLivingCells;
+	}
+	
 	public void loadGeneration0() {		
 		curGen = new boolean[genZero.length][];
 		for(int i = 0; i < genZero.length; i++)
@@ -63,6 +81,7 @@ public class Model {
 	
 	public void resetGenCount() {
 		generation.set(0);
+		firstGen = true;
 	}
 	
 	public void addListener(CellChangedListener listener) {
@@ -72,13 +91,15 @@ public class Model {
 	
 	public void notifyListener(int x, int y, boolean alive) {
 		for(CellChangedListener l: listeners) {
-			l.cellChanged(x, y, alive);
+			l.cellChanged(x, y, alive, firstGen);
 		}
 	}
 	
-	public void setNextGeneration() {
+	public int setNextGeneration() {
+		int numCells = 0;
 		if(generation.get() == 0) {
 			saveGeneration0();
+			firstGen = false;
 		}
 //		nextGen = new boolean[ySize][xSize];
 		resetNeighbours();
@@ -90,10 +111,12 @@ public class Model {
 					curGen[y][x] = false;
 				} else if((num == 2 || num == 3) && curGen[y][x]) {
 					curGen[y][x] = true;
+					numCells++;
 				} else if(num > 3 && curGen[y][x]) {
 					curGen[y][x] = false; 
 				} else if(num == 3 && !curGen[y][x]) {
 					curGen[y][x] = true;
+					numCells++;
 				} else {
 					curGen[y][x] = false;
 				}
@@ -102,6 +125,7 @@ public class Model {
 		generation.set(generation.get()+1); 
 //		curGen = nextGen;
 		notifyBoardChange();
+		return numCells;
 	}
 
 	private void calcNumNeighbours() {
