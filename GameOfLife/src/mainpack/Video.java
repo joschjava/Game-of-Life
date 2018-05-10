@@ -15,6 +15,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
 import gui.MainWindowController;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;
@@ -31,38 +34,49 @@ public class Video {
 	}
 	
 	public void createVideo() {
+		System.out.println("Starting");
+		
 		Task worker = new Task (){
 	          @Override
 	            protected Object call() throws Exception {
-	                for (int i = 0; i < 10; i++) {
-	                    Thread.sleep(2000);
-	                    updateMessage("2000 milliseconds");
-	                    updateProgress(i + 1, 10);
-	                }
-	                return true;
+	        	  Platform.runLater(new Runnable() {
+
+					@Override
+					public void run() {
+						saveCurrentGameGrid();
+						int generations = options.getGeneration();
+						for (int i = 0; i < generations; i++) {
+							controller.getModel().setNextGeneration();
+							saveCurrentGameGrid();
+							updateProgress(i + 1, generations);
+							updateMessage(i + 1 + "/" + generations);
+						}
+						try {
+							renderVideo(options.getFile(), options.getFps());
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							FileUtils.deleteDirectory(new File(Const.VIDEO_TEMP_DIR));
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						System.out.println("Done");
+					}
+
+				}
+
+				);
+
+                return true;
 	            }
 		};
+		controller.bindProgressBarToLoading(worker);
+		new Thread(worker).start();
 	}
-	public void createVideoThread() {
-		saveCurrentGameGrid();
-	    for(int i=0;i < options.getGeneration();i++) {
-	    	controller.getModel().setNextGeneration();
-	    	saveCurrentGameGrid();
-	    }
-	    try {
-			renderVideo(options.getFile(), options.getFps());
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        try {
-			FileUtils.deleteDirectory(new File(Const.VIDEO_TEMP_DIR));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
+
 	private void renderVideo(File dst, int fps) throws MalformedURLException {
 	    Vector<String> imgLst = new Vector<String>();
 	    File dir = new File(Const.VIDEO_TEMP_DIR);
@@ -103,38 +117,28 @@ public class Video {
 		WritableImage imageRaw = controller.getCurrentGridSnapshot();
 
 		// Get buffered image:
-		BufferedImage image = 
-		  SwingFXUtils.fromFXImage(
-				  imageRaw, 
-		    null); 
+		BufferedImage image = SwingFXUtils.fromFXImage(imageRaw, null);
 
 		// Remove alpha-channel from buffered image:
-		BufferedImage imageRGB = 
-		  new BufferedImage(
-		    image.getWidth(), 
-		    image.getHeight(), 
-		    BufferedImage.OPAQUE); 
+		BufferedImage imageRGB = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.OPAQUE);
 
 		Graphics2D graphics = imageRGB.createGraphics();
 
-		graphics.drawImage(
-		  image, 
-		  0, 
-		  0, 
-		  null);
+		graphics.drawImage(image, 0, 0, null);
 
 		graphics.dispose();
 		File dir = new File(Const.VIDEO_TEMP_DIR);
-		if(!dir.exists()) {
+		if (!dir.exists()) {
 			dir.mkdir();
 		}
 		String filename = String.format("%05d.jpg", controller.getModel().getGeneration());
-        File file = new File(dir, filename);
-        try {
-            ImageIO.write(imageRGB, "jpg", file);
-        } catch (IOException e) {
-            // TODO: handle exception here
-        }
+		File file = new File(dir, filename);
+		try {
+			ImageIO.write(imageRGB, "jpg", file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	

@@ -44,8 +44,6 @@ public class VideoDialog {
 		grid.setVgap(10);
 		grid.setPadding(new Insets(20, 150, 10, 10));
 
-
-
 		UnaryOperator<Change> filter = change -> {
 		    String text = change.getText();
 		
@@ -92,7 +90,7 @@ public class VideoDialog {
 				validateSubmit();
 			}
 		});
-		
+		file = new File("Testing.mov");
 		grid.add(new Label("Last Generation:"), 0, 0);
 		grid.add(tfEndGen, 1, 0);
 		grid.add(new Label("Frames per Second:"), 0, 1);
@@ -127,6 +125,8 @@ public class VideoDialog {
  		   file == null) {
  			valid = false;
  		}
+ 		//TODO: Remove
+ 		valid = true;
  		btSubmit.setDisable(!valid);
  	}
  	

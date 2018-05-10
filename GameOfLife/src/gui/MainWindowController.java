@@ -9,6 +9,7 @@ import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
@@ -64,6 +65,9 @@ public class MainWindowController implements CellChangedListener{
 	
 	@FXML 
 	Label lbSpeed;
+	
+	@FXML 
+	Label lbProgress;
 	
 	@FXML
 	Slider slSpeed;
@@ -181,6 +185,10 @@ public class MainWindowController implements CellChangedListener{
     	return mainPane;
     }
     
+    public void bindProgressBarToLoading(Task worker) {
+        pbVideo.progressProperty().bind(worker.progressProperty());
+        lbProgress.textProperty().bind(worker.messageProperty());
+    }
 
 	public WritableImage getCurrentGridSnapshot() {
 		return gameGrid.snapshot(new SnapshotParameters(), null);
