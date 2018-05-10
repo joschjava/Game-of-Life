@@ -6,7 +6,6 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.VBox?>
 
-
 <HBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.MainWindowController">
    <children>
       <VBox fx:id="mainPane">
@@ -36,6 +35,11 @@
                <VBox.margin>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </VBox.margin>
+            </HBox>
+            <HBox>
+               <children>
+                  <ProgressBar fx:id="pbVideo" prefWidth="200.0" progress="0.0" />
+               </children>
             </HBox>
          </children>
       </VBox>

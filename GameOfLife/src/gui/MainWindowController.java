@@ -1,42 +1,29 @@
 package gui;
 
 
-import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Optional;
-
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FileUtils;
 
 import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.util.converter.NumberStringConverter;
@@ -80,6 +67,9 @@ public class MainWindowController implements CellChangedListener{
 	
 	@FXML
 	Slider slSpeed;
+	
+	@FXML
+	ProgressBar pbVideo;
 	
 	Model m;
 	
@@ -179,110 +169,24 @@ public class MainWindowController implements CellChangedListener{
     }
 
     private void createVideo() {
-    	Optional<VideoSettings> settings = showVideoDialog();
+    	Optional<VideoSettings> settings = new VideoDialog().showVideoDialog(this);
     	settings.ifPresent(options -> {
-    		saveAsFile();
-		    for(int i=0;i < options.getGeneration();i++) {
-		    	m.setNextGeneration();
-		    	saveAsFile();
-		    }
-		    try {
-				Video.makeVideo("test.mov", options.getFps());
-			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	        try {
-				FileUtils.deleteDirectory(new File(Const.VIDEO_TEMP_DIR));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+    		Video video = new Video(this, options);
+    		video.createVideo();
 		});
     	
     }
     
-    //TODO: Save video until current position
-	private Optional<VideoSettings> showVideoDialog() {
-		// Create the custom dialog.
-		Dialog<VideoSettings> dialog = new Dialog<>();
-		dialog.setTitle("Login Dialog");
-		dialog.setHeaderText("Look, a Custom Login Dialog");
+    public Pane getMainPane() {
+    	return mainPane;
+    }
+    
 
-
-		// Set the button types.
-		ButtonType btSubmit = new ButtonType("Submit", ButtonData.OK_DONE);
-		dialog.getDialogPane().getButtonTypes().addAll(btSubmit, ButtonType.CANCEL);
-
-		// Create the username and password labels and fields.
-		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
-		grid.setPadding(new Insets(20, 150, 10, 10));
-
-		TextField tfEndGen = new TextField("10");
-		TextField tfFps = new TextField("1");
-
-		grid.add(new Label("Last Generation:"), 0, 0);
-		grid.add(tfEndGen, 1, 0);
-		grid.add(new Label("Frames per Second:"), 0, 1);
-		grid.add(tfFps, 1, 1);
-
-		dialog.getDialogPane().setContent(grid);
-
-		dialog.setResultConverter(dialogButton -> {
-			if(dialogButton.equals(btSubmit)) {
-				int endGen = Integer.parseInt(tfEndGen.getText());
-				int fps = Integer.parseInt(tfFps.getText());
-				
-				return new VideoSettings(fps, endGen);
-			} else {
-				return null;
-			}
-		});
-		
-		return dialog.showAndWait();
-	}
-
-	private void saveAsFile() {
-		WritableImage imageRaw = gameGrid.snapshot(new SnapshotParameters(), null);
-
-		// Get buffered image:
-		BufferedImage image = 
-		  SwingFXUtils.fromFXImage(
-				  imageRaw, 
-		    null); 
-
-		// Remove alpha-channel from buffered image:
-		BufferedImage imageRGB = 
-		  new BufferedImage(
-		    image.getWidth(), 
-		    image.getHeight(), 
-		    BufferedImage.OPAQUE); 
-
-		Graphics2D graphics = imageRGB.createGraphics();
-
-		graphics.drawImage(
-		  image, 
-		  0, 
-		  0, 
-		  null);
-
-		graphics.dispose();
-		File dir = new File(Const.VIDEO_TEMP_DIR);
-		if(!dir.exists()) {
-			dir.mkdir();
-		}
-        File file = new File(dir, m.getGeneration()+".jpg");
-        try {
-            ImageIO.write(imageRGB, "jpg", file);
-        } catch (IOException e) {
-            // TODO: handle exception here
-        }
+	public WritableImage getCurrentGridSnapshot() {
+		return gameGrid.snapshot(new SnapshotParameters(), null);
 	}
 
 	private void setNextGeneration() {
-        
 		int numCells = m.setNextGeneration();
         series.getData().add(new XYChart.Data(m.generationProperty().get(), numCells));
         if(numCells == 0) {
@@ -290,6 +194,10 @@ public class MainWindowController implements CellChangedListener{
         }
 	}
 
+	public Model getModel() {
+		return m;
+	}
+	
     public void generateGrid(int xSize, int ySize) {
     	gameGrid.getChildren().clear();
     	gameGrid.setOnMouseExited((me) ->

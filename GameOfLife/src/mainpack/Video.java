@@ -1,5 +1,6 @@
 package mainpack;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +14,56 @@ import javax.media.MediaLocator;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
+import gui.MainWindowController;
+import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.WritableImage;
+import objects.VideoSettings;
+
 public class Video {
 
-	public static void makeVideo(String fileName, int fps) throws MalformedURLException {
+	MainWindowController controller;
+	VideoSettings options;
+	
+	public Video(MainWindowController controller, VideoSettings options){
+		this.controller = controller;
+		this.options = options;
+	}
+	
+	public void createVideo() {
+		Task worker = new Task (){
+	          @Override
+	            protected Object call() throws Exception {
+	                for (int i = 0; i < 10; i++) {
+	                    Thread.sleep(2000);
+	                    updateMessage("2000 milliseconds");
+	                    updateProgress(i + 1, 10);
+	                }
+	                return true;
+	            }
+		};
+	}
+	public void createVideoThread() {
+		saveCurrentGameGrid();
+	    for(int i=0;i < options.getGeneration();i++) {
+	    	controller.getModel().setNextGeneration();
+	    	saveCurrentGameGrid();
+	    }
+	    try {
+			renderVideo(options.getFile(), options.getFps());
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        try {
+			FileUtils.deleteDirectory(new File(Const.VIDEO_TEMP_DIR));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private void renderVideo(File dst, int fps) throws MalformedURLException {
 	    Vector<String> imgLst = new Vector<String>();
 	    File dir = new File(Const.VIDEO_TEMP_DIR);
 
@@ -24,7 +72,7 @@ public class Video {
 		files.forEach(file ->  {
 			imgLst.add(file.getAbsolutePath());
 		});
-
+		
 		if(imgLst.size() > 0) {
 			File firstIm = files.get(0);
             BufferedImage bi;
@@ -35,11 +83,13 @@ public class Video {
 	            int imageHeight = bi.getHeight();
 	    	    VideoGenerator imageToMovie = new VideoGenerator();
 	    	    MediaLocator oml;
-	    	    if ((oml = VideoGenerator.createMediaLocator(fileName)) == null) {
-	    	        System.err.println("Cannot build media locator from: " + fileName);
+	    	    if ((oml = VideoGenerator.createMediaLocator(dst.getName())) == null) {
+	    	        System.err.println("Cannot build media locator from: " + dst.getName());
 	    	    }
 	    	    imageToMovie.doIt(imageWidth, imageHeight, fps, imgLst, oml);
-	            
+	    	    File src = new File(dst.getName());
+	            FileUtils.moveFile(src, dst);
+	    	    
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -47,9 +97,45 @@ public class Video {
 		} else {
 			System.err.println("Error creating video: No images found in directory!");
 		}
-
-
-
 	}
+	
+	public void saveCurrentGameGrid() {
+		WritableImage imageRaw = controller.getCurrentGridSnapshot();
+
+		// Get buffered image:
+		BufferedImage image = 
+		  SwingFXUtils.fromFXImage(
+				  imageRaw, 
+		    null); 
+
+		// Remove alpha-channel from buffered image:
+		BufferedImage imageRGB = 
+		  new BufferedImage(
+		    image.getWidth(), 
+		    image.getHeight(), 
+		    BufferedImage.OPAQUE); 
+
+		Graphics2D graphics = imageRGB.createGraphics();
+
+		graphics.drawImage(
+		  image, 
+		  0, 
+		  0, 
+		  null);
+
+		graphics.dispose();
+		File dir = new File(Const.VIDEO_TEMP_DIR);
+		if(!dir.exists()) {
+			dir.mkdir();
+		}
+		String filename = String.format("%05d.jpg", controller.getModel().getGeneration());
+        File file = new File(dir, filename);
+        try {
+            ImageIO.write(imageRGB, "jpg", file);
+        } catch (IOException e) {
+            // TODO: handle exception here
+        }
+	}
+
 	
 }
