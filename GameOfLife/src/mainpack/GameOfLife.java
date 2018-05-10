@@ -1,5 +1,6 @@
 package mainpack;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javafx.application.Application;
@@ -15,6 +16,12 @@ public class GameOfLife extends Application {
 	
 	
 	public static void main(String[] args) {
+//		try {
+//			Video.makeVideo("test.mov");
+//		} catch (MalformedURLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		launch(args);
 	}
 
