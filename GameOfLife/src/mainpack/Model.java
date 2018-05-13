@@ -9,7 +9,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class Model {
 
 	private boolean curGen[][];
-//	private boolean nextGen[][];
+
 	private boolean genZero[][];
 	
 	private int numNeighbours[][];
@@ -31,6 +31,19 @@ public class Model {
 				curGen[y][x] = false;
 			}
 		}
+	}
+	
+	public void setGrid(boolean[][] newGrid) {
+		curGen = newGrid;
+		notifyBoardChange();
+	}
+	
+	public int getXsize() {
+		return xSize;
+	}
+	
+	public int getYsize() {
+		return ySize;
 	}
 	
 	public IntegerProperty generationProperty() {

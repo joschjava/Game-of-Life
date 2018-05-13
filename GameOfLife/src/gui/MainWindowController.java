@@ -2,6 +2,7 @@ package gui;
 
 
 import java.awt.Point;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -30,6 +31,7 @@ import javafx.util.Duration;
 import javafx.util.converter.NumberStringConverter;
 import mainpack.CellChangedListener;
 import mainpack.Const;
+import mainpack.ImageAnalyser;
 import mainpack.Model;
 import mainpack.Video;
 import objects.VideoSettings;
@@ -67,6 +69,9 @@ public class MainWindowController implements CellChangedListener{
 	Label lbSpeed;
 	
 	@FXML 
+	Button btDebug;
+	
+	@FXML 
 	Label lbProgress;
 	
 	@FXML
@@ -91,7 +96,7 @@ public class MainWindowController implements CellChangedListener{
 	
     @FXML
     public void initialize() {
-    	generateGrid(30,25);
+    	generateGrid(50,35);
     	btStep.setOnMouseClicked((me) -> {
     		setNextGeneration();
     	});
@@ -149,6 +154,13 @@ public class MainWindowController implements CellChangedListener{
     		          gameGrid.setCursor(Cursor.DEFAULT);
     		      }
     		});
+    	});
+    	
+    	btDebug.setOnMouseClicked((me) -> {
+    		ImageAnalyser ia = new ImageAnalyser();
+    		File file = new File("C:\\loeschen\\test.jpg");
+    		boolean[][] grid = ia.convertImage(file, m, 200);
+    		m.setGrid(grid);
     	});
     	
 		NumberStringConverter converter = new NumberStringConverter() {
