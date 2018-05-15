@@ -10,6 +10,8 @@ import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
@@ -78,6 +80,9 @@ public class MainWindowController implements CellChangedListener{
 	Slider slSpeed;
 	
 	@FXML
+	Slider slThreshold;
+	
+	@FXML
 	ProgressBar pbVideo;
 	
 	Model m;
@@ -96,7 +101,7 @@ public class MainWindowController implements CellChangedListener{
 	
     @FXML
     public void initialize() {
-    	generateGrid(50,35);
+    	generateGrid(36,64);
     	btStep.setOnMouseClicked((me) -> {
     		setNextGeneration();
     	});
@@ -109,6 +114,9 @@ public class MainWindowController implements CellChangedListener{
 		ticker.setCycleCount(Timeline.INDEFINITE);
         ticker.rateProperty()
         .bind(slSpeed.valueProperty().divide(100./19).add(1));
+        
+ 
+        
         
     	btPlay.setOnMouseClicked((me) -> {
     		if(ticker.getStatus() == Status.STOPPED) {
@@ -128,7 +136,7 @@ public class MainWindowController implements CellChangedListener{
     		m.clearGrid();
     		resetChart();
     	});
-    
+    	
     	
     	btReset.disableProperty().bind(
     			Bindings.when(
@@ -158,9 +166,20 @@ public class MainWindowController implements CellChangedListener{
     	
     	btDebug.setOnMouseClicked((me) -> {
     		ImageAnalyser ia = new ImageAnalyser();
-    		File file = new File("C:\\loeschen\\test.jpg");
+    		File file = new File("C:\\loeschen\\hokar.jpg");
     		boolean[][] grid = ia.convertImage(file, m, 200);
     		m.setGrid(grid);
+	       slThreshold.valueProperty().addListener(new ChangeListener<Number>() {
+	            @Override
+	            public void changed(ObservableValue<? extends Number> observable,
+	                    Number oldValue, Number newValue) {
+	            	int scaledValue = (int) (newValue.doubleValue()*2.55);
+	            	System.out.println(scaledValue);
+	        		boolean[][] grid = ia.adjustThreshold(scaledValue);
+	        		m.setGrid(grid);
+	            }
+	        });
+//	       btDebug.setOnMouseClicked(me2-> ia.adjustThreshold(200));
     	});
     	
 		NumberStringConverter converter = new NumberStringConverter() {
@@ -239,9 +258,12 @@ public class MainWindowController implements CellChangedListener{
 
     	for (int y = 0; y < ySize; y++) {
         	for (int x = 0; x < xSize; x++) {
-        		Button b = new Button(" ");
+        		Button b = new Button("");
         		b.getProperties().put("gridX", x);
         		b.getProperties().put("gridY", y);
+            	b.setMaxSize(10, 10);
+            	b.setPrefSize(10, 10);
+            	b.setMinSize(10,10);
         		
         		b.setOnMousePressed((me) -> {
         			if(placeActive) {

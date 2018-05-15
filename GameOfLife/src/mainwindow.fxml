@@ -10,7 +10,7 @@
    <children>
       <VBox fx:id="mainPane">
          <children>
-            <GridPane fx:id="gameGrid" gridLinesVisible="true">
+            <GridPane fx:id="gameGrid" gridLinesVisible="true" maxHeight="200.0" maxWidth="200.0">
                <columnConstraints>
                   <ColumnConstraints />
                </columnConstraints>
@@ -43,6 +43,7 @@
                   <Label fx:id="lbProgress" text="Label" />
                </children>
             </HBox>
+            <Slider fx:id="slThreshold" />
          </children>
       </VBox>
       <Accordion>

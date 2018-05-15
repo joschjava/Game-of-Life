@@ -35,6 +35,7 @@ public class Model {
 	
 	public void setGrid(boolean[][] newGrid) {
 		curGen = newGrid;
+		resetGenCount();
 		notifyBoardChange();
 	}
 	
