@@ -43,7 +43,7 @@
                   <Label fx:id="lbProgress" text="Label" />
                </children>
             </HBox>
-            <Slider fx:id="slThreshold" />
+            <Slider fx:id="slThreshold" max="255.0" />
          </children>
       </VBox>
       <Accordion>

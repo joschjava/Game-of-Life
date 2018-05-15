@@ -49,7 +49,7 @@ public class ImageAnalyser {
 							grid[y][x] = false;
 						}
 					} else {
-						grid[y][x] = true;
+						grid[y][x] = false;
 					}
 				}
 			}

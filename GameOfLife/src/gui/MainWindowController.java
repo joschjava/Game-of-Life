@@ -101,7 +101,7 @@ public class MainWindowController implements CellChangedListener{
 	
     @FXML
     public void initialize() {
-    	generateGrid(36,64);
+    	generateGrid(60,60);
     	btStep.setOnMouseClicked((me) -> {
     		setNextGeneration();
     	});
@@ -166,20 +166,21 @@ public class MainWindowController implements CellChangedListener{
     	
     	btDebug.setOnMouseClicked((me) -> {
     		ImageAnalyser ia = new ImageAnalyser();
-    		File file = new File("C:\\loeschen\\hokar.jpg");
-    		boolean[][] grid = ia.convertImage(file, m, 200);
+    		File file = new File("C:\\loeschen\\test2.jpg");
+    		int threshold = 123;
+    		boolean[][] grid = ia.convertImage(file, m, threshold);
+    		slThreshold.setValue(threshold);
     		m.setGrid(grid);
 	       slThreshold.valueProperty().addListener(new ChangeListener<Number>() {
 	            @Override
 	            public void changed(ObservableValue<? extends Number> observable,
 	                    Number oldValue, Number newValue) {
-	            	int scaledValue = (int) (newValue.doubleValue()*2.55);
-	            	System.out.println(scaledValue);
-	        		boolean[][] grid = ia.adjustThreshold(scaledValue);
+	            	int value = newValue.intValue();
+	        		boolean[][] grid = ia.adjustThreshold(value);
 	        		m.setGrid(grid);
+	        		resetChart();
 	            }
 	        });
-//	       btDebug.setOnMouseClicked(me2-> ia.adjustThreshold(200));
     	});
     	
 		NumberStringConverter converter = new NumberStringConverter() {
@@ -227,10 +228,14 @@ public class MainWindowController implements CellChangedListener{
 
 	private void setNextGeneration() {
 		int numCells = m.setNextGeneration();
-        series.getData().add(new XYChart.Data(m.generationProperty().get(), numCells));
+		series.getData().add(new XYChart.Data(m.generationProperty().get(), numCells));
         if(numCells == 0) {
         	ticker.stop();
         }
+	}
+
+	private void setFirstGenerationCount(int numCells) {
+		series.getData().add(new XYChart.Data(m.generationProperty().get(), numCells));
 	}
 
 	public Model getModel() {
@@ -313,6 +318,8 @@ public class MainWindowController implements CellChangedListener{
 		}
     	
     }
+    
+
     
     private void createChart() {
 
