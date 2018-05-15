@@ -8,13 +8,33 @@ import javax.imageio.ImageIO;
 
 public class ImageAnalyser {
 
-	
+	private static ImageAnalyser ia;
+	private int lastThreshold = 123;
 	
 	private int[][] gridAverage;
 
+	private File file;
+
+	private ImageAnalyser() {
+		
+	}
+	
+	public static ImageAnalyser getInstance() {
+		if(ia == null) {
+			ia = new ImageAnalyser();
+		}
+		return ia;
+	}
+	
+	public File getPreviousFile() {
+		return file;
+	}
+	
 	public boolean[][] convertImage(File file, Model m, int threshold){
 		BufferedImage img = null;
+		lastThreshold = threshold;
 		try {
+			this.file = file;
 			img = ImageIO.read(file);
 			int width = img.getWidth();
 			int height = img.getHeight();
@@ -65,8 +85,8 @@ public class ImageAnalyser {
 	};
 	
 	public boolean[][] adjustThreshold(int threshold){
-
 		if(gridAverage != null) {
+			lastThreshold = threshold;
 			int tilesX = gridAverage[0].length;
 			int tilesY = gridAverage.length;
 			boolean[][] grid = new boolean[tilesY][tilesX];
@@ -91,5 +111,9 @@ public class ImageAnalyser {
 	    int green = (rgbValue >> 8) & 0xff;
 	    int blue = (rgbValue) & 0xff;
 	    return (red+green+blue)/3;
+	}
+	
+	public int getThreshold() {
+		return lastThreshold;
 	}
 }

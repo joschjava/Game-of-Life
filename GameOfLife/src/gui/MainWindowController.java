@@ -74,6 +74,9 @@ public class MainWindowController implements CellChangedListener{
 	Button btDebug;
 	
 	@FXML 
+	Button btImage;
+	
+	@FXML 
 	Label lbProgress;
 	
 	@FXML
@@ -165,22 +168,11 @@ public class MainWindowController implements CellChangedListener{
     	});
     	
     	btDebug.setOnMouseClicked((me) -> {
-    		ImageAnalyser ia = new ImageAnalyser();
-    		File file = new File("C:\\loeschen\\test2.jpg");
-    		int threshold = 123;
-    		boolean[][] grid = ia.convertImage(file, m, threshold);
-    		slThreshold.setValue(threshold);
-    		m.setGrid(grid);
-	       slThreshold.valueProperty().addListener(new ChangeListener<Number>() {
-	            @Override
-	            public void changed(ObservableValue<? extends Number> observable,
-	                    Number oldValue, Number newValue) {
-	            	int value = newValue.intValue();
-	        		boolean[][] grid = ia.adjustThreshold(value);
-	        		m.setGrid(grid);
-	        		resetChart();
-	            }
-	        });
+    		
+    	});
+    	
+    	btImage.setOnMouseClicked((me) -> {
+    		new ImageDialog().showVideoDialog(this);
     	});
     	
 		NumberStringConverter converter = new NumberStringConverter() {
@@ -340,7 +332,7 @@ public class MainWindowController implements CellChangedListener{
         mainPane.getChildren().add(lineChart);
     }
     
-    private void resetChart() {
+    void resetChart() {
     	int size = series.getData().size();
     	if(size>1 || size == 0) {
     		series.getData().clear();

@@ -29,6 +29,7 @@
                    <Button fx:id="btClear" mnemonicParsing="false" text="Clear" />
                     <Button fx:id="btReset" mnemonicParsing="false" text="Reset" />
                     <Button fx:id="btVideo" mnemonicParsing="false" text="Create Video" />
+                    <Button fx:id="btImage" mnemonicParsing="false" text="Image" />
                      <Button fx:id="btDebug" mnemonicParsing="false" text="Debug" />
                   <Slider fx:id="slSpeed" />
                      <Label fx:id="lbSpeed" mnemonicParsing="false" text="0" />
